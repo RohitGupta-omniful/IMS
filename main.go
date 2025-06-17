@@ -1,18 +1,37 @@
 package main
 
 import (
-	"github.com/omniful/go_commons/log"
+	"log"
+
+	"github.com/gin-gonic/gin"
+	"github.com/omniful/go_commons/http"
+
+	"InventoryManagementSystemMicroService/config"
 )
 
 func main() {
+	config.LoadConfig(".")
 
-	log.Infof("OMS service is starting up...")
+	//db.Connect(config.AppConfig.Database)
 
-	// Example logs at various levels
-	log.Debugf("This is a debug message: %v", "debug-info")
-	log.Warnf("This is a warning!")
-	log.Errorf("This is an error log with code %d", 500)
+	log.Printf("Starting %s at PORT %s\n", config.AppConfig.Server.Name, config.AppConfig.Server.Port)
 
-	// Normally you'd start server / worker here
-	// server.Start()
+	server := http.InitializeServer(
+		config.AppConfig.Server.Port,
+		config.AppConfig.Server.ReadTimeout,
+		config.AppConfig.Server.WriteTimeout,
+		config.AppConfig.Server.IdleTimeout,
+		false,
+	)
+
+	server.GET("/health", func(ctx *gin.Context) {
+		ctx.JSON(200, gin.H{"status": "ok"})
+	})
+
+	//ims := server.Engine.Group("/api/v1")
+	//routes.RegisterHubRoutes(ims)
+
+	if err := server.StartServer(config.AppConfig.Server.Name); err != nil {
+		log.Fatal("Could not start server:", err)
+	}
 }

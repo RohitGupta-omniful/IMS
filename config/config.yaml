@@ -1,0 +1,18 @@
+server:
+  name: ims-service
+  port: ":8000"
+  read_timeout: 10s
+  write_timeout: 10s
+  idle_timeout: 70s
+
+database:
+  host: "localhost"
+  port: 5432
+  user: "postgres"
+  password: "password"
+  name: "ims_db"
+
+aws:
+  region: "us-west-2"
+  public_bucket: "ims-temp-public"
+  private_bucket: "ims-private"
