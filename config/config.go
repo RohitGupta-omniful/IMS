@@ -7,9 +7,9 @@ import (
 )
 
 type Config struct {
-	Server   ServerConfig
-	Database DBConfig
-	AWS      AWSConfig
+	Server   ServerConfig `mapstructure:"server"`
+	Database DBConfig     `mapstructure:"database"`
+	AWS      AWSConfig    `mapstructure:"aws"`
 }
 
 type ServerConfig struct {
@@ -41,10 +41,12 @@ func LoadConfig(path string) {
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(path)
 
+	// Read file
 	if err := viper.ReadInConfig(); err != nil {
 		log.Fatalf("Failed to read config file: %v", err)
 	}
 
+	// Unmarshal into struct
 	var config Config
 	if err := viper.Unmarshal(&config); err != nil {
 		log.Fatalf("Failed to unmarshal config: %v", err)
