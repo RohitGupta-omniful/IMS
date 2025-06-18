@@ -1,0 +1,28 @@
+server:
+  name: ims-service
+  port: ":8000"
+  read_timeout: 10s
+  write_timeout: 10s
+  idle_timeout: 70s
+
+postgresql:
+  debugMode: true
+  database_name: ims_db
+  maxIdleConns: 2
+  maxOpenConns: 10
+  connMaxLifetime: "30m"
+  master:
+    host: "localhost"
+    port: 5432
+    user: "postgres"
+    password: "rohit##3233##"
+  slave:
+    host: "localhost"
+    port: 5432
+    user: "postgres"
+    password: "rohit##3233##"
+
+aws:
+  region: "us-west-2"
+  public_bucket: "ims-temp-public"
+  private_bucket: "ims-private"
