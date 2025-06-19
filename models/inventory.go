@@ -6,12 +6,15 @@ import (
 	"github.com/google/uuid"
 )
 
-type SKU struct {
+type Inventory struct {
 	ID        uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
-	Name      string    `gorm:"type:varchar(100);not null"`
-	SKU       string    `gorm:"type:varchar(50);unique;not null"`
-	Price     float64   `gorm:"type:numeric(10,2);not null"`
+	HubID     uuid.UUID `gorm:"type:uuid;not null"`
+	ProductID uuid.UUID `gorm:"type:uuid;not null"`
 	Quantity  int       `gorm:"default:0"`
+
+	Hub     Hub `gorm:"foreignKey:HubID"`
+	Product SKU `gorm:"foreignKey:ProductID"`
+
 	CreatedAt time.Time `gorm:"default:now()"`
 	UpdatedAt time.Time `gorm:"default:now()"`
 }

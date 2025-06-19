@@ -18,7 +18,7 @@ const (
 
 	// PostgreSQL keys
 	pgDebugKey           = "postgresql.debugMode"
-	pgDBNameKey          = "postgresql.databasse_name"
+	pgDBNameKey          = "postgresql.database_name"
 	pgMaxIdleKey         = "postgresql.maxIdleConns"
 	pgMaxOpenKey         = "postgresql.maxOpenConns"
 	pgConnMaxLifetimeKey = "postgresql.connMaxLifetime"
