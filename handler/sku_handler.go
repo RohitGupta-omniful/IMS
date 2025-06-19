@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/RohitGupta-omniful/IMS/cache"
 	"github.com/RohitGupta-omniful/IMS/db"
 	"github.com/RohitGupta-omniful/IMS/models"
 	"github.com/gin-gonic/gin"
@@ -49,8 +50,10 @@ func GetSKU(c *gin.Context) {
 
 func UpdateSKU(c *gin.Context) {
 	id := c.Param("id")
+	ctx := context.Background()
+
 	var sku models.SKU
-	if err := db.GetMasterDB(context.Background()).First(&sku, "id = ?", id).Error; err != nil {
+	if err := db.GetMasterDB(ctx).First(&sku, "id = ?", id).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "SKU not found"})
 		return
 	}
@@ -59,19 +62,30 @@ func UpdateSKU(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
 	sku.UpdatedAt = time.Now()
-	if err := db.GetMasterDB(context.Background()).Save(&sku).Error; err != nil {
+
+	if err := db.GetMasterDB(ctx).Save(&sku).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	// Invalidate SKU cache
+	_ = cache.Del(ctx, "sku:exists:"+id)
+
 	c.JSON(http.StatusOK, sku)
 }
-
 func DeleteSKU(c *gin.Context) {
 	id := c.Param("id")
-	if err := db.GetMasterDB(context.Background()).Delete(&models.SKU{}, "id = ?", id).Error; err != nil {
+	ctx := context.Background()
+
+	if err := db.GetMasterDB(ctx).Delete(&models.SKU{}, "id = ?", id).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	//Invalidate SKU cache
+	_ = cache.Del(ctx, "sku:exists:"+id)
+
 	c.JSON(http.StatusOK, gin.H{"message": "SKU deleted"})
 }

@@ -5,7 +5,9 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"time"
 
+	"github.com/RohitGupta-omniful/IMS/cache"
 	"github.com/RohitGupta-omniful/IMS/db"
 	"github.com/RohitGupta-omniful/IMS/models"
 	"github.com/gin-gonic/gin"
@@ -21,9 +23,20 @@ func ValidateHubExists(c *gin.Context) {
 		return
 	}
 
+	ctx := context.Background()
+	cacheKey := "hub:exists:" + hubID.String()
+
+	// Try Redis first
+	if cached, _ := cache.Get(ctx, cacheKey); cached != "" {
+		exists := cached == "true"
+		c.JSON(http.StatusOK, gin.H{"exists": exists})
+		return
+	}
+
 	var hub models.Hub
-	err = db.GetMasterDB(context.Background()).First(&hub, "id = ?", hubID).Error
+	err = db.GetMasterDB(ctx).First(&hub, "id = ?", hubID).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
+		cache.Set(ctx, cacheKey, "false", 10*time.Minute)
 		c.JSON(http.StatusOK, gin.H{"exists": false})
 		return
 	} else if err != nil {
@@ -32,6 +45,7 @@ func ValidateHubExists(c *gin.Context) {
 		return
 	}
 
+	cache.Set(ctx, cacheKey, "true", 10*time.Minute)
 	c.JSON(http.StatusOK, gin.H{"exists": true})
 }
 
@@ -47,9 +61,22 @@ func ValidateSKUOnHub(c *gin.Context) {
 		return
 	}
 
+	ctx := context.Background()
+	cacheKey := "sku_on_hub:exists:" + hubID.String() + ":" + skuID.String()
+
+	if cached, _ := cache.Get(ctx, cacheKey); cached != "" {
+		exists := cached == "true"
+		c.JSON(http.StatusOK, gin.H{"exists": exists})
+		return
+	}
+
 	var inventory models.Inventory
-	err := db.GetMasterDB(context.Background()).Where("product_id = ? AND hub_id = ?", skuID, hubID).First(&inventory).Error
+	err := db.GetMasterDB(ctx).
+		Where("product_id = ? AND hub_id = ?", skuID, hubID).
+		First(&inventory).Error
+
 	if errors.Is(err, gorm.ErrRecordNotFound) {
+		cache.Set(ctx, cacheKey, "false", 10*time.Minute)
 		c.JSON(http.StatusOK, gin.H{"exists": false})
 		return
 	} else if err != nil {
@@ -58,6 +85,7 @@ func ValidateSKUOnHub(c *gin.Context) {
 		return
 	}
 
+	cache.Set(ctx, cacheKey, "true", 10*time.Minute)
 	c.JSON(http.StatusOK, gin.H{"exists": true})
 }
 

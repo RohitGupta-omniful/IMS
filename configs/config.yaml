@@ -26,3 +26,20 @@ aws:
   region: "us-west-2"
   public_bucket: "ims-temp-public"
   private_bucket: "ims-private"
+
+redis:
+  hosts: "localhost:6379"
+  cluster_mode: false
+  serve_reads_from_slaves: false
+  serve_reads_from_master_and_slaves: false
+
+  pool_size: 50
+  pool_fifo: true
+  min_idle_conn: 10
+
+  db: 0
+
+  dial_timeout: 500ms
+  read_timeout: 2s
+  write_timeout: 2s
+  idle_timeout: 600s

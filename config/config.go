@@ -37,6 +37,20 @@ const (
 	awsRegionKey        = "aws.region"
 	awsPublicBucketKey  = "aws.public_bucket"
 	awsPrivateBucketKey = "aws.private_bucket"
+
+	//Redis keys
+	redisHostsKey                      = "redis.hosts"
+	redisClusterModeKey                = "redis.cluster_mode"
+	redisServeReadsFromSlavesKey       = "redis.serve_reads_from_slaves"
+	redisServeReadsFromMasterSlavesKey = "redis.serve_reads_from_master_and_slaves"
+	redisPoolSizeKey                   = "redis.pool_size"
+	redisPoolFIFOKey                   = "redis.pool_fifo"
+	redisMinIdleConnKey                = "redis.min_idle_conn"
+	redisDBKey                         = "redis.db"
+	redisDialTimeoutKey                = "redis.dial_timeout"
+	redisReadTimeoutKey                = "redis.read_timeout"
+	redisWriteTimeoutKey               = "redis.write_timeout"
+	redisIdleTimeoutKey                = "redis.idle_timeout"
 )
 
 // InitConfig initializes go_commons config with polling
@@ -146,4 +160,54 @@ func GetPublicBucket(ctx context.Context) string {
 
 func GetPrivateBucket(ctx context.Context) string {
 	return config.GetString(ctx, awsPrivateBucketKey)
+}
+
+// === Redis ===
+
+func GetRedisHosts(ctx context.Context) []string {
+	return config.GetStringSlice(ctx, redisHostsKey)
+}
+
+func GetRedisClusterMode(ctx context.Context) bool {
+	return config.GetBool(ctx, redisClusterModeKey)
+}
+
+func GetRedisServeReadsFromSlaves(ctx context.Context) bool {
+	return config.GetBool(ctx, redisServeReadsFromSlavesKey)
+}
+
+func GetRedisServeReadsFromMasterAndSlaves(ctx context.Context) bool {
+	return config.GetBool(ctx, redisServeReadsFromMasterSlavesKey)
+}
+
+func GetRedisPoolSize(ctx context.Context) int {
+	return config.GetInt(ctx, redisPoolSizeKey)
+}
+
+func GetRedisPoolFIFO(ctx context.Context) bool {
+	return config.GetBool(ctx, redisPoolFIFOKey)
+}
+
+func GetRedisMinIdleConn(ctx context.Context) int {
+	return config.GetInt(ctx, redisMinIdleConnKey)
+}
+
+func GetRedisDB(ctx context.Context) int {
+	return config.GetInt(ctx, redisDBKey)
+}
+
+func GetRedisDialTimeout(ctx context.Context) time.Duration {
+	return config.GetDuration(ctx, redisDialTimeoutKey)
+}
+
+func GetRedisReadTimeout(ctx context.Context) time.Duration {
+	return config.GetDuration(ctx, redisReadTimeoutKey)
+}
+
+func GetRedisWriteTimeout(ctx context.Context) time.Duration {
+	return config.GetDuration(ctx, redisWriteTimeoutKey)
+}
+
+func GetRedisIdleTimeout(ctx context.Context) time.Duration {
+	return config.GetDuration(ctx, redisIdleTimeoutKey)
 }

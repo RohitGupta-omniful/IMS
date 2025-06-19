@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 
+	"github.com/RohitGupta-omniful/IMS/cache"
 	"github.com/RohitGupta-omniful/IMS/config"
 	"github.com/RohitGupta-omniful/IMS/db"
 	"github.com/RohitGupta-omniful/IMS/db/migration"
@@ -23,7 +24,9 @@ func main() {
 
 	// Initialize server and routes
 	app := server.Initialize(ctx)
-	//router.RegisterRoutes(app.Engine)
+	//redis cache client
+
+	cache.InitRedisClient(ctx)
 
 	// Start HTTP server
 	log.Printf("Starting %s on %s", config.GetServerName(ctx), config.GetServerPort(ctx))
