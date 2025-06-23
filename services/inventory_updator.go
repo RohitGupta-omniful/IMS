@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -15,78 +16,100 @@ import (
 	"gorm.io/gorm"
 )
 
+type ValidationData struct {
+	IsValid bool `json:"is_valid"`
+}
+
+type Response struct {
+	Data ValidationData `json:"data"`
+}
+
 func ValidateHubExists(c *gin.Context) {
-	hubIDStr := c.Param("id")
+	hubIDStr := c.Param("hub")
+
 	hubID, err := uuid.Parse(hubIDStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid hub ID"})
+		c.JSON(http.StatusBadRequest, Response{
+			Data: ValidationData{IsValid: false},
+		})
 		return
 	}
 
+	fmt.Println("reaches")
 	ctx := context.Background()
 	cacheKey := "hub:exists:" + hubID.String()
 
 	// Try Redis first
 	if cached, _ := cache.Get(ctx, cacheKey); cached != "" {
 		exists := cached == "true"
-		c.JSON(http.StatusOK, gin.H{"exists": exists})
+		c.JSON(http.StatusOK, Response{
+			Data: ValidationData{IsValid: exists},
+		})
+		//fmt.Println("found in redis")
 		return
 	}
 
 	var hub models.Hub
 	err = db.GetMasterDB(ctx).First(&hub, "id = ?", hubID).Error
+
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		cache.Set(ctx, cacheKey, "false", 10*time.Minute)
-		c.JSON(http.StatusOK, gin.H{"exists": false})
+		c.JSON(http.StatusOK, Response{
+			Data: ValidationData{IsValid: false},
+		})
 		return
 	} else if err != nil {
 		log.Printf("[ValidateHubExists] DB error: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal error"})
+		c.JSON(http.StatusInternalServerError, Response{
+			Data: ValidationData{IsValid: false},
+		})
 		return
 	}
-
+	//fmt.Println("found")
 	cache.Set(ctx, cacheKey, "true", 10*time.Minute)
-	c.JSON(http.StatusOK, gin.H{"exists": true})
+	c.JSON(http.StatusOK, Response{
+		Data: ValidationData{IsValid: true},
+	})
 }
 
 // --- HTTP Handler for validating SKU-on-Hub existence ---
-func ValidateSKUOnHub(c *gin.Context) {
-	skuIDStr := c.Query("sku_id")
-	hubIDStr := c.Query("hub_id")
+func ValidateSKUExists(c *gin.Context) {
+	skuIDStr := c.Param("sku")
 
-	skuID, err1 := uuid.Parse(skuIDStr)
-	hubID, err2 := uuid.Parse(hubIDStr)
-	if err1 != nil || err2 != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid SKU or Hub ID"})
+	skuID, err := uuid.Parse(skuIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, Response{
+			Data: ValidationData{IsValid: false},
+		})
 		return
 	}
-
+	fmt.Println("reaches")
 	ctx := context.Background()
-	cacheKey := "sku_on_hub:exists:" + hubID.String() + ":" + skuID.String()
+	cacheKey := "sku:exists:" + skuID.String()
 
 	if cached, _ := cache.Get(ctx, cacheKey); cached != "" {
 		exists := cached == "true"
-		c.JSON(http.StatusOK, gin.H{"exists": exists})
+		c.JSON(http.StatusOK, Response{Data: ValidationData{IsValid: exists}})
+		fmt.Println("found in redis")
 		return
 	}
 
-	var inventory models.Inventory
-	err := db.GetMasterDB(ctx).
-		Where("product_id = ? AND hub_id = ?", skuID, hubID).
-		First(&inventory).Error
-
+	var skus models.SKU
+	err = db.GetMasterDB(ctx).First(&skus, "id = ?", skuID).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		cache.Set(ctx, cacheKey, "false", 10*time.Minute)
-		c.JSON(http.StatusOK, gin.H{"exists": false})
+		c.JSON(http.StatusOK, Response{Data: ValidationData{IsValid: false}})
 		return
 	} else if err != nil {
-		log.Printf("[ValidateSKUOnHub] DB error: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal error"})
+		log.Printf("[ValidateSKUExists] DB error: %v", err)
+		c.JSON(http.StatusInternalServerError, Response{
+			Data: ValidationData{IsValid: false},
+		})
 		return
 	}
 
 	cache.Set(ctx, cacheKey, "true", 10*time.Minute)
-	c.JSON(http.StatusOK, gin.H{"exists": true})
+	c.JSON(http.StatusOK, Response{Data: ValidationData{IsValid: true}})
 }
 
 var (

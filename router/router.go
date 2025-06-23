@@ -24,6 +24,6 @@ func RegisterRoutes(s *gin.Engine) {
 
 	// Inventory update
 	s.POST("/inventory/update", services.UpdateInventoryHandler)
-	s.GET("/validate/hub", services.ValidateHubExists)
-	s.GET("/validate/sku_on_hub", services.ValidateSKUOnHub)
+	s.GET("/validate/hub/:hub", services.ValidateHubExists)
+	s.GET("/validate/sku/:sku", services.ValidateSKUExists)
 }
