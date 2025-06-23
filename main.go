@@ -24,8 +24,8 @@ func main() {
 
 	// Initialize server and routes
 	app := server.Initialize(ctx)
-	//redis cache client
 
+	//redis cache client
 	cache.InitRedisClient(ctx)
 
 	// Start HTTP server
