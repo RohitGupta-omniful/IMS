@@ -2,7 +2,6 @@ package cache
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/RohitGupta-omniful/IMS/models"
@@ -10,13 +9,13 @@ import (
 
 // CacheHub caches a hub object
 func CacheHub(ctx context.Context, hub models.Hub, ttl time.Duration) error {
-	key := fmt.Sprintf("hub:%s", hub.ID.String())
+	key := "hub:" + hub.ID.String()
 	return SetJSON(ctx, key, hub, ttl)
 }
 
 // GetCachedHub fetches hub from Redis
 func GetCachedHub(ctx context.Context, hubID string) (*models.Hub, error) {
-	key := fmt.Sprintf("hub:%s", hubID)
+	key := "hub:" + hubID
 	var hub models.Hub
 	if err := GetJSON(ctx, key, &hub); err != nil {
 		return nil, err
@@ -26,6 +25,6 @@ func GetCachedHub(ctx context.Context, hubID string) (*models.Hub, error) {
 
 // DeleteHubCache removes cached hub
 func DeleteHubCache(ctx context.Context, hubID string) error {
-	key := fmt.Sprintf("hub:%s", hubID)
+	key := "hub:" + hubID
 	return Del(ctx, key)
 }

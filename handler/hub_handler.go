@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"github.com/RohitGupta-omniful/IMS/cache"
@@ -10,6 +9,7 @@ import (
 	"github.com/RohitGupta-omniful/IMS/models"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/omniful/go_commons/log"
 )
 
 // ----------------------- HUBS -----------------------
@@ -18,8 +18,9 @@ func CreateHub(c *gin.Context) {
 	var hub models.Hub
 
 	if err := c.BindJSON(&hub); err != nil {
-		log.Printf("[CreateHub] Invalid JSON: %v", err)
+		log.Errorf("[CreateHub] Invalid JSON: %v", err)
 		c.JSON(400, gin.H{"error": "invalid request body"})
+		return
 	}
 
 	hub.ID = uuid.New()
@@ -27,8 +28,9 @@ func CreateHub(c *gin.Context) {
 	hub.UpdatedAt = time.Now()
 
 	if err := db.GetMasterDB(context.Background()).Create(&hub).Error; err != nil {
-		log.Printf("[CreateHub] DB error: %v", err)
+		log.Errorf("[CreateHub] DB error: %v", err)
 		c.JSON(500, gin.H{"error": "could not create hub"})
+		return
 	}
 
 	c.JSON(201, hub)
@@ -38,12 +40,14 @@ func GetHub(c *gin.Context) {
 	id := c.Param("id")
 	if _, err := uuid.Parse(id); err != nil {
 		c.JSON(400, gin.H{"error": "invalid hub ID format"})
+		return
 	}
 
 	var hub models.Hub
 	if err := db.GetMasterDB(context.Background()).First(&hub, "id = ?", id).Error; err != nil {
-		log.Printf("[GetHub] Not found: %v", err)
+		log.Errorf("[GetHub] Not found: %v", err)
 		c.JSON(404, gin.H{"error": "hub not found"})
+		return
 	}
 
 	c.JSON(200, hub)
@@ -52,8 +56,9 @@ func GetHub(c *gin.Context) {
 func ListHubs(c *gin.Context) {
 	var hubs []models.Hub
 	if err := db.GetMasterDB(context.Background()).Find(&hubs).Error; err != nil {
-		log.Printf("[ListHubs] DB error: %v", err)
+		log.Errorf("[ListHubs] DB error: %v", err)
 		c.JSON(500, gin.H{"error": "could not fetch hubs"})
+		return
 	}
 	c.JSON(200, hubs)
 }
@@ -70,14 +75,14 @@ func UpdateHub(c *gin.Context) {
 
 	var existing models.Hub
 	if err := dbConn.First(&existing, "id = ?", id).Error; err != nil {
-		log.Printf("[UpdateHub] Not found: %v", err)
+		log.Errorf("[UpdateHub] Not found: %v", err)
 		c.JSON(404, gin.H{"error": "hub not found"})
 		return
 	}
 
 	var payload models.Hub
 	if err := c.BindJSON(&payload); err != nil {
-		log.Printf("[UpdateHub] Invalid JSON: %v", err)
+		log.Errorf("[UpdateHub] Invalid JSON: %v", err)
 		c.JSON(400, gin.H{"error": "invalid request body"})
 		return
 	}
@@ -87,7 +92,7 @@ func UpdateHub(c *gin.Context) {
 	existing.UpdatedAt = time.Now()
 
 	if err := dbConn.Save(&existing).Error; err != nil {
-		log.Printf("[UpdateHub] Save error: %v", err)
+		log.Errorf("[UpdateHub] Save error: %v", err)
 		c.JSON(500, gin.H{"error": "could not update hub"})
 		return
 	}
@@ -108,7 +113,7 @@ func DeleteHub(c *gin.Context) {
 	ctx := context.Background()
 
 	if err := db.GetMasterDB(ctx).Delete(&models.Hub{}, "id = ?", id).Error; err != nil {
-		log.Printf("[DeleteHub] Delete error: %v", err)
+		log.Errorf("[DeleteHub] Delete error: %v", err)
 		c.JSON(400, gin.H{"error": "could not delete hub"})
 		return
 	}
