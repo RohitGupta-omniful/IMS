@@ -44,7 +44,7 @@ IMS/
 All APIs require an authorization header:
 
 ```
-Authorization: Bearer secret-token
+Authorization: Bearer my-secret-token
 ```
 
 ---
@@ -85,7 +85,7 @@ Authorization: Bearer secret-token
 
 **Headers:**
 ```
-Authorization: Bearer secret-token
+Authorization: Bearer my-secret-token
 ```
 
 **Response:**
