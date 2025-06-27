@@ -11,6 +11,7 @@ import (
 	"github.com/RohitGupta-omniful/IMS/models"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/omniful/go_commons/i18n"
 	"github.com/omniful/go_commons/log"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -25,16 +26,16 @@ type Response struct {
 }
 
 func ValidateHubExists(c *gin.Context) {
+	ctx := c.Request.Context()
 	hubIDStr := c.Param("hub")
 	hubID, err := uuid.Parse(hubIDStr)
 	if err != nil {
+		log.Errorf("[ValidateHubExists] %s: %v", i18n.Translate(ctx, "invalid_hub_id"), err)
 		c.JSON(http.StatusBadRequest, Response{Data: ValidationData{IsValid: false}})
 		return
 	}
 
-	ctx := context.Background()
 	cacheKey := "hub:exists:" + hubID.String()
-
 	if cached, _ := cache.Get(ctx, cacheKey); cached != "" {
 		c.JSON(http.StatusOK, Response{Data: ValidationData{IsValid: cached == "true"}})
 		return
@@ -47,7 +48,7 @@ func ValidateHubExists(c *gin.Context) {
 		c.JSON(http.StatusOK, Response{Data: ValidationData{IsValid: false}})
 		return
 	} else if err != nil {
-		log.Errorf("[ValidateHubExists] DB error: %v", err)
+		log.Errorf("[ValidateHubExists] %s: %v", i18n.Translate(ctx, "db_error"), err)
 		c.JSON(http.StatusInternalServerError, Response{Data: ValidationData{IsValid: false}})
 		return
 	}
@@ -57,16 +58,16 @@ func ValidateHubExists(c *gin.Context) {
 }
 
 func ValidateSKUExists(c *gin.Context) {
+	ctx := c.Request.Context()
 	skuIDStr := c.Param("sku")
 	skuID, err := uuid.Parse(skuIDStr)
 	if err != nil {
+		log.Errorf("[ValidateSKUExists] %s: %v", i18n.Translate(ctx, "invalid_sku_id"), err)
 		c.JSON(http.StatusBadRequest, Response{Data: ValidationData{IsValid: false}})
 		return
 	}
 
-	ctx := context.Background()
 	cacheKey := "sku:exists:" + skuID.String()
-
 	if cached, _ := cache.Get(ctx, cacheKey); cached != "" {
 		c.JSON(http.StatusOK, Response{Data: ValidationData{IsValid: cached == "true"}})
 		return
@@ -79,7 +80,7 @@ func ValidateSKUExists(c *gin.Context) {
 		c.JSON(http.StatusOK, Response{Data: ValidationData{IsValid: false}})
 		return
 	} else if err != nil {
-		log.Errorf("[ValidateSKUExists] DB error: %v", err)
+		log.Errorf("[ValidateSKUExists] %s: %v", i18n.Translate(ctx, "db_error"), err)
 		c.JSON(http.StatusInternalServerError, Response{Data: ValidationData{IsValid: false}})
 		return
 	}
@@ -102,44 +103,46 @@ type InventoryUpdateRequest struct {
 }
 
 func UpdateInventoryHandler(c *gin.Context) {
+	ctx := c.Request.Context()
+
 	var req InventoryUpdateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		log.Errorf("[UpdateInventoryHandler] Invalid request body: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": Translate("invalid_request")})
+		log.Errorf("[UpdateInventoryHandler] %s: %v", i18n.Translate(ctx, "invalid_request"), err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": i18n.Translate(ctx, "invalid_request")})
 		return
 	}
 
 	skuUUID, err := uuid.Parse(req.SKUID)
 	if err != nil {
-		log.Errorf("[UpdateInventoryHandler] Invalid sku_id: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": Translate("invalid_sku_id")})
+		log.Errorf("[UpdateInventoryHandler] %s: %v", i18n.Translate(ctx, "invalid_sku_id"), err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": i18n.Translate(ctx, "invalid_sku_id")})
 		return
 	}
 
 	hubUUID, err := uuid.Parse(req.HubID)
 	if err != nil {
-		log.Errorf("[UpdateInventoryHandler] Invalid hub_id: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": Translate("invalid_hub_id")})
+		log.Errorf("[UpdateInventoryHandler] %s: %v", i18n.Translate(ctx, "invalid_hub_id"), err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": i18n.Translate(ctx, "invalid_hub_id")})
 		return
 	}
 
-	err = UpdateInventory(context.Background(), skuUUID, hubUUID, req.QuantityChange, req.TransactionType)
+	err = UpdateInventory(ctx, skuUUID, hubUUID, req.QuantityChange, req.TransactionType)
 	if err != nil {
-		log.Errorf("[UpdateInventoryHandler] Service error: %v", err)
+		log.Errorf("[UpdateInventoryHandler] %s: %v", i18n.Translate(ctx, "inventory_update_error"), err)
 		switch err {
 		case ErrHubNotFound:
-			c.JSON(http.StatusNotFound, gin.H{"error": Translate("hub_not_found")})
+			c.JSON(http.StatusNotFound, gin.H{"error": i18n.Translate(ctx, "hub_not_found")})
 		case ErrSKUNotFound:
-			c.JSON(http.StatusNotFound, gin.H{"error": Translate("sku_not_found")})
+			c.JSON(http.StatusNotFound, gin.H{"error": i18n.Translate(ctx, "sku_not_found")})
 		case ErrInsufficientQty:
-			c.JSON(http.StatusBadRequest, gin.H{"error": Translate("insufficient_inventory")})
+			c.JSON(http.StatusBadRequest, gin.H{"error": i18n.Translate(ctx, "insufficient_inventory")})
 		default:
-			c.JSON(http.StatusInternalServerError, gin.H{"error": Translate("internal_server_error")})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": i18n.Translate(ctx, "internal_server_error")})
 		}
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": Translate("inventory_updated")})
+	c.JSON(http.StatusOK, gin.H{"message": i18n.Translate(ctx, "inventory_updated")})
 }
 
 func UpdateInventory(ctx context.Context, skuID, hubID uuid.UUID, quantityChange int, transactionType string) error {
@@ -148,7 +151,6 @@ func UpdateInventory(ctx context.Context, skuID, hubID uuid.UUID, quantityChange
 	return dbConn.Transaction(func(tx *gorm.DB) error {
 		var inventory models.Inventory
 
-		// Lock the row to prevent race conditions
 		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
 			Where("sku_id = ? AND hub_id = ?", skuID, hubID).
 			First(&inventory).Error; err != nil {
@@ -160,11 +162,11 @@ func UpdateInventory(ctx context.Context, skuID, hubID uuid.UUID, quantityChange
 
 		switch transactionType {
 		case "add":
-			// quantityChange remains positive
+			// no-op
 		case "remove":
 			quantityChange = -intAbs(quantityChange)
 		default:
-			return errors.New(Translate("invalid_transaction_type"))
+			return errors.New(i18n.Translate(ctx, "invalid_transaction_type"))
 		}
 
 		newQty := inventory.Quantity + quantityChange
@@ -182,24 +184,4 @@ func intAbs(x int) int {
 		return -x
 	}
 	return x
-}
-
-// i18n stub
-var locale = map[string]string{
-	"invalid_request":          "Invalid request body",
-	"invalid_sku_id":           "Invalid SKU ID",
-	"invalid_hub_id":           "Invalid Hub ID",
-	"hub_not_found":            "Hub not found",
-	"sku_not_found":            "SKU not found",
-	"insufficient_inventory":   "Not enough inventory",
-	"internal_server_error":    "Internal server error",
-	"inventory_updated":        "Inventory updated successfully",
-	"invalid_transaction_type": "Invalid transaction type",
-}
-
-func Translate(key string) string {
-	if val, ok := locale[key]; ok {
-		return val
-	}
-	return key
 }

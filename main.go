@@ -10,6 +10,7 @@ import (
 	"github.com/RohitGupta-omniful/IMS/db"
 	"github.com/RohitGupta-omniful/IMS/db/migration"
 	"github.com/RohitGupta-omniful/IMS/server"
+	"github.com/omniful/go_commons/i18n"
 )
 
 func main() {
@@ -22,7 +23,7 @@ func main() {
 	// Get context with config
 	ctx, err := config.TODOContext()
 	if err != nil {
-		log.Errorf("Failed to load config context: %v", err)
+		log.Errorf(i18n.Translate(ctx, "Failed to load config context: %v"), err)
 		return
 	}
 
@@ -44,6 +45,6 @@ func main() {
 
 	// Start server
 	if err := app.StartServer(serverPort); err != nil {
-		log.Errorf("Server failed: %v", err)
+		log.Errorf(i18n.Translate(ctx, "Server failed: %v"), err)
 	}
 }

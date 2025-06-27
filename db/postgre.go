@@ -5,6 +5,7 @@ import (
 
 	"github.com/omniful/go_commons/config"
 	"github.com/omniful/go_commons/db/sql/postgres"
+	"github.com/omniful/go_commons/i18n"
 	"github.com/omniful/go_commons/log"
 	"gorm.io/gorm"
 )
@@ -39,7 +40,7 @@ func InitDatabase(ctx context.Context) {
 
 	// Initialize DB cluster
 	DBCluster = postgres.InitializeDBInstance(masterConfig, &slaveConfigs)
-	log.Info("Database connection established successfully")
+	log.Info(i18n.Translate(ctx, "Database connection established successfully"))
 }
 
 // GetMasterDB returns a master *gorm.DB instance

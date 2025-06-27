@@ -6,7 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// RegisterRoutes registers all service routes to the given server
 func RegisterRoutes(s *gin.Engine) {
 	// Hub CRUD
 	s.Use(middleware.AuthMiddleware)

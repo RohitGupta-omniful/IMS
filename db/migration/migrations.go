@@ -6,6 +6,7 @@ import (
 
 	"github.com/omniful/go_commons/config"
 	"github.com/omniful/go_commons/db/sql/migration"
+	"github.com/omniful/go_commons/i18n"
 	"github.com/omniful/go_commons/log"
 )
 
@@ -20,7 +21,7 @@ func RunMigrations(ctx context.Context) {
 
 	// Construct DSN
 	dbURL := "postgres://" + username + ":" + password + "@" + host + ":" + port + "/" + dbname + "?sslmode=disable"
-	log.Infof("Migration DB URL: %s", dbURL)
+	log.Infof(i18n.Translate(ctx, "Migration DB URL: %s"), dbURL)
 
 	// Path to migration files (update to dynamic path or embed if needed)
 	migrationPath := "file://C:/Users/LENOVO/go/Omniful/Onboarding-project/InventoryManagementSystemMicroService/db/migration"
@@ -28,14 +29,14 @@ func RunMigrations(ctx context.Context) {
 	// Initialize migrator
 	migrator, err := migration.InitializeMigrate(migrationPath, dbURL)
 	if err != nil {
-		log.Errorf("Failed to initialize migrator: %v", err)
+		log.Errorf(i18n.Translate(ctx, "Failed to initialize migrator: %v"), err)
 		return
 	}
 
 	if err := migrator.Up(); err != nil {
-		log.Errorf("Failed to apply migrations: %v", err)
+		log.Errorf(i18n.Translate(ctx, "Failed to apply migrations: %v"), err)
 		return
 	}
 
-	log.Info("Migrations applied successfully")
+	log.Info(i18n.Translate(ctx, "Migrations applied successfully"))
 }
