@@ -1,60 +1,156 @@
 
-Inventory Management System (IMS) Microservice
-=============================================
+# IMS - Inventory Management System Microservice
 
-This microservice manages hubs, SKUs, and inventory operations. It provides robust CRUD APIs, validation endpoints, caching, database migrations, and internationalized responses.
+This microservice manages **hubs**, **SKUs**, and **inventory operations** for the Omniful Inventory Management Platform. It provides robust CRUD APIs, validation endpoints, Redis-based caching, GORM-based database migrations, and internationalized responses.
 
-Project Structure
------------------
-cache/             # Redis cache setup and usage
-configs/           # Configuration and environment management
-db/                # Database connection and GORM-based migrations
-handler/           # HTTP handlers for hubs, SKUs, and inventory
-localstack/        # Localstack testing setup
-middleware/        # Token authentication and request logging
-models/            # GORM models for Hub, SKU, Inventory, etc.
-router/            # API route definitions
-server/            # Gin router and server setup
-main.go            # Entry point of the application
-docker-compose.yml # Redis and PostgreSQL setup
-go.mod / go.sum    # Go module dependencies
+---
 
-Features
---------
-- Full CRUD operations for Hubs and SKUs
-- Inventory upsert with conflict resolution
-- Hub and SKU validation endpoints
-- Redis-based caching for validations
-- Token-based authentication middleware
-- Structured logging of requests
-- i18n support for localizable messages and logs
-- Go-based database migration tooling
-- Docker Compose support for local development
+## Project Structure
 
-Application Workflow
---------------------
-1. Service initializes configs, DB, Redis, i18n, and Gin HTTP server
-2. Token-based middleware validates the Authorization header
-3. Validation endpoints check existence of hubs or SKUs
-4. Redis is used as a cache; DB is checked on cache miss
-5. /inventory/upsert allows inserting or updating inventory records
-6. Standard CRUD operations for hub and SKU resources
-7. Development environment runs with docker-compose
+```
+IMS/
+├── cache/              # Redis cache setup and usage
+├── configs/            # Configuration and environment management
+├── db/                 # Database connection and migrations
+├── handler/            # HTTP handlers for hubs, SKUs, and inventory
+├── localstack/         # LocalStack testing support
+├── middleware/         # Authentication and logging middleware
+├── models/             # GORM models for Hub, SKU, Inventory, etc.
+├── router/             # API route definitions
+├── server/             # Gin server setup
+├── docker-compose.yml  # Redis and PostgreSQL containers
+├── go.mod / go.sum     # Go module dependencies
+└── main.go             # Application entry point
+```
 
-API Endpoints (Examples)
-------------------------
+---
 
-Validate Hub
-------------
-GET /validate/hub/{hub_id}
+## Features
 
-Headers:
+- CRUD operations for **Hubs** and **SKUs**
+- Inventory **upsert** with conflict resolution
+- Validation endpoints for hub and SKU existence
+- Redis-based **caching** for validation lookups
+- Token-based **authentication middleware**
+- Structured logging via middleware
+- **i18n** support for multi-language response messages
+- Go-native DB migration tooling
+- Local development with **Docker Compose**
+
+---
+
+## Authentication
+
+All APIs require an authorization header:
+
+```
 Authorization: Bearer secret-token
+```
 
-Response:
+---
+
+## Project Workflow
+
+### 1. Service Initialization
+
+- Loads configs, connects to DB, initializes Redis, sets up i18n, and starts the Gin server.
+
+### 2. Request Handling
+
+- Middleware checks for a valid bearer token.
+- Logging and i18n are handled uniformly across routes.
+
+### 3. Validation Endpoints
+
+- `GET /validate/hub/:id` and `GET /validate/sku/:id` check Redis for cached results first.
+- If not found in cache, fallback to DB lookup.
+- Returns `{ "is_valid": true/false }`.
+
+### 4. Inventory Upsert
+
+- `POST /inventory/upsert` allows inserting or updating inventory quantities.
+- Conflict resolution is handled at the DB level.
+
+### 5. CRUD Endpoints
+
+- Full POST, GET, PUT, DELETE for **Hub** and **SKU** models.
+
+---
+
+## API Endpoints
+
+### Validate Hub
+
+**GET** `/validate/hub/{hub_id}`
+
+**Headers:**
+```
+Authorization: Bearer secret-token
+```
+
+**Response:**
+```json
 {
   "data": {
     "is_valid": true
   }
 }
+```
 
+### Validate SKU
+
+**GET** `/validate/sku/{sku_id}`
+
+**Headers:**
+```
+Authorization: Bearer secret-token
+```
+
+**Response:**
+```json
+{
+  "data": {
+    "is_valid": false
+  }
+}
+```
+
+### Upsert Inventory
+
+**POST** `/inventory/upsert`
+
+**Headers:**
+```
+Authorization: Bearer secret-token
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "hub_id": "hub123",
+  "sku_id": "sku456",
+  "quantity": 100
+}
+```
+
+---
+
+## Local Development
+
+Use Docker and Postgres/Redis containers for local development:
+
+```bash
+docker-compose up -d
+go run main.go
+```
+
+Test endpoints with tools like **Postman**, **Thunder Client**, or `curl`.
+
+---
+
+## Notes
+
+- All protected routes require a valid bearer token.
+- Redis is used to reduce DB hits for validation checks.
+- i18n enables multi-language response customization.
