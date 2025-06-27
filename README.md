@@ -77,7 +77,7 @@ Authorization: Bearer my-secret-token
 
 ---
 
-## API Endpoints Example
+## API Endpoint Example
 
 ### Validate Hub
 
