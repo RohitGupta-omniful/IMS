@@ -12,8 +12,6 @@ import (
 	"github.com/omniful/go_commons/log"
 )
 
-// ----------------------- HUBS -----------------------
-
 func CreateHub(c *gin.Context) {
 	var hub models.Hub
 
@@ -34,23 +32,6 @@ func CreateHub(c *gin.Context) {
 	}
 
 	c.JSON(201, hub)
-}
-
-func GetHub(c *gin.Context) {
-	id := c.Param("id")
-	if _, err := uuid.Parse(id); err != nil {
-		c.JSON(400, gin.H{"error": "invalid hub ID format"})
-		return
-	}
-
-	var hub models.Hub
-	if err := db.GetMasterDB(context.Background()).First(&hub, "id = ?", id).Error; err != nil {
-		log.Errorf("[GetHub] Not found: %v", err)
-		c.JSON(404, gin.H{"error": "hub not found"})
-		return
-	}
-
-	c.JSON(200, hub)
 }
 
 func ListHubs(c *gin.Context) {
@@ -97,7 +78,6 @@ func UpdateHub(c *gin.Context) {
 		return
 	}
 
-	// Invalidate Redis cache
 	_ = cache.Del(ctx, "hub:exists:"+id)
 
 	c.JSON(200, existing)
@@ -118,7 +98,6 @@ func DeleteHub(c *gin.Context) {
 		return
 	}
 
-	// Invalidate Redis cache
 	_ = cache.Del(ctx, "hub:exists:"+id)
 
 	c.JSON(200, map[string]string{"message": "hub deleted"})

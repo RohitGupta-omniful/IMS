@@ -18,7 +18,6 @@ var (
 	once        sync.Once
 )
 
-// InitRedisClient initializes the Redis client once using go_commons/redis
 func InitRedisClient(ctx context.Context) {
 	once.Do(func() {
 		cfg := &redis.Config{
@@ -44,15 +43,13 @@ func InitRedisClient(ctx context.Context) {
 	})
 }
 
-// GetRedisClient returns the initialized Redis client
 func GetRedisClient() *redis.Client {
 	if redisClient == nil {
-		log.Panic("Redis client is not initialized. Call InitRedisClient first.")
+		log.Info("Redis client is not initialized. Call InitRedisClient first.")
 	}
 	return redisClient
 }
 
-// Set sets a key-value pair with expiration
 func Set(ctx context.Context, key string, value interface{}, ttl time.Duration) error {
 	valStr, ok := value.(string)
 	if !ok {
@@ -66,7 +63,6 @@ func Set(ctx context.Context, key string, value interface{}, ttl time.Duration) 
 	return err
 }
 
-// Get retrieves a string value for a key
 func Get(ctx context.Context, key string) (string, error) {
 	val, err := GetRedisClient().Get(ctx, key)
 	if err != nil {
@@ -75,7 +71,6 @@ func Get(ctx context.Context, key string) (string, error) {
 	return val, err
 }
 
-// SetJSON sets any struct as JSON in Redis
 func SetJSON(ctx context.Context, key string, value interface{}, ttl time.Duration) error {
 	data, err := json.Marshal(value)
 	if err != nil {
@@ -89,7 +84,6 @@ func SetJSON(ctx context.Context, key string, value interface{}, ttl time.Durati
 	return err
 }
 
-// GetJSON retrieves and unmarshals a JSON object into dest
 func GetJSON(ctx context.Context, key string, dest interface{}) error {
 	strVal, err := GetRedisClient().Get(ctx, key)
 	if err != nil {
@@ -103,7 +97,6 @@ func GetJSON(ctx context.Context, key string, dest interface{}) error {
 	return nil
 }
 
-// Del deletes a key
 func Del(ctx context.Context, keys ...string) error {
 	_, err := GetRedisClient().Del(ctx, keys...)
 	if err != nil {

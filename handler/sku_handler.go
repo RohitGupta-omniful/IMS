@@ -30,22 +30,27 @@ func CreateSKU(c *gin.Context) {
 }
 
 func ListSKUs(c *gin.Context) {
-	var skus []models.SKU
-	if err := db.GetMasterDB(context.Background()).Find(&skus).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, skus)
-}
+	ctx := context.Background()
+	dbConn := db.GetMasterDB(ctx)
 
-func GetSKU(c *gin.Context) {
-	id := c.Param("id")
-	var sku models.SKU
-	if err := db.GetMasterDB(context.Background()).First(&sku, "id = ?", id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "SKU not found"})
+	var skus []models.SKU
+	query := dbConn.Model(&models.SKU{})
+
+	if tenantID := c.Query("tenant_id"); tenantID != "" {
+		query = query.Where("tenant_id = ?", tenantID)
+	}
+	if sellerID := c.Query("seller_id"); sellerID != "" {
+		query = query.Where("seller_id = ?", sellerID)
+	}
+	if skuCodes := c.QueryArray("sku_code"); len(skuCodes) > 0 {
+		query = query.Where("sku_code IN ?", skuCodes)
+	}
+
+	if err := query.Find(&skus).Error; err != nil {
+		c.JSON(500, gin.H{"error": "could not fetch SKUs"})
 		return
 	}
-	c.JSON(http.StatusOK, sku)
+	c.JSON(200, skus)
 }
 
 func UpdateSKU(c *gin.Context) {

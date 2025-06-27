@@ -1,9 +1,8 @@
-package services
+package handler
 
 import (
 	"context"
 	"errors"
-	"log"
 	"net/http"
 	"time"
 
@@ -12,6 +11,7 @@ import (
 	"github.com/RohitGupta-omniful/IMS/models"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/omniful/go_commons/log"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -43,16 +43,16 @@ func ValidateHubExists(c *gin.Context) {
 	var hub models.Hub
 	err = db.GetMasterDB(ctx).First(&hub, "id = ?", hubID).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		cache.Set(ctx, cacheKey, "false", 10*time.Minute)
+		_ = cache.Set(ctx, cacheKey, "false", 10*time.Minute)
 		c.JSON(http.StatusOK, Response{Data: ValidationData{IsValid: false}})
 		return
 	} else if err != nil {
-		log.Printf("[ValidateHubExists] DB error: %v", err)
+		log.Errorf("[ValidateHubExists] DB error: %v", err)
 		c.JSON(http.StatusInternalServerError, Response{Data: ValidationData{IsValid: false}})
 		return
 	}
 
-	cache.Set(ctx, cacheKey, "true", 10*time.Minute)
+	_ = cache.Set(ctx, cacheKey, "true", 10*time.Minute)
 	c.JSON(http.StatusOK, Response{Data: ValidationData{IsValid: true}})
 }
 
@@ -75,16 +75,16 @@ func ValidateSKUExists(c *gin.Context) {
 	var sku models.SKU
 	err = db.GetMasterDB(ctx).First(&sku, "id = ?", skuID).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		cache.Set(ctx, cacheKey, "false", 10*time.Minute)
+		_ = cache.Set(ctx, cacheKey, "false", 10*time.Minute)
 		c.JSON(http.StatusOK, Response{Data: ValidationData{IsValid: false}})
 		return
 	} else if err != nil {
-		log.Printf("[ValidateSKUExists] DB error: %v", err)
+		log.Errorf("[ValidateSKUExists] DB error: %v", err)
 		c.JSON(http.StatusInternalServerError, Response{Data: ValidationData{IsValid: false}})
 		return
 	}
 
-	cache.Set(ctx, cacheKey, "true", 10*time.Minute)
+	_ = cache.Set(ctx, cacheKey, "true", 10*time.Minute)
 	c.JSON(http.StatusOK, Response{Data: ValidationData{IsValid: true}})
 }
 
@@ -104,42 +104,42 @@ type InventoryUpdateRequest struct {
 func UpdateInventoryHandler(c *gin.Context) {
 	var req InventoryUpdateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		log.Printf("[UpdateInventoryHandler] Invalid request body: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		log.Errorf("[UpdateInventoryHandler] Invalid request body: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": Translate("invalid_request")})
 		return
 	}
 
 	skuUUID, err := uuid.Parse(req.SKUID)
 	if err != nil {
-		log.Printf("[UpdateInventoryHandler] Invalid sku_id: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid sku_id"})
+		log.Errorf("[UpdateInventoryHandler] Invalid sku_id: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": Translate("invalid_sku_id")})
 		return
 	}
 
 	hubUUID, err := uuid.Parse(req.HubID)
 	if err != nil {
-		log.Printf("[UpdateInventoryHandler] Invalid hub_id: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid hub_id"})
+		log.Errorf("[UpdateInventoryHandler] Invalid hub_id: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": Translate("invalid_hub_id")})
 		return
 	}
 
 	err = UpdateInventory(context.Background(), skuUUID, hubUUID, req.QuantityChange, req.TransactionType)
 	if err != nil {
-		log.Printf("[UpdateInventoryHandler] Service error: %v", err)
+		log.Errorf("[UpdateInventoryHandler] Service error: %v", err)
 		switch err {
 		case ErrHubNotFound:
-			c.JSON(http.StatusNotFound, gin.H{"error": "hub not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": Translate("hub_not_found")})
 		case ErrSKUNotFound:
-			c.JSON(http.StatusNotFound, gin.H{"error": "SKU not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": Translate("sku_not_found")})
 		case ErrInsufficientQty:
-			c.JSON(http.StatusBadRequest, gin.H{"error": "not enough inventory"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": Translate("insufficient_inventory")})
 		default:
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": Translate("internal_server_error")})
 		}
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "inventory updated"})
+	c.JSON(http.StatusOK, gin.H{"message": Translate("inventory_updated")})
 }
 
 func UpdateInventory(ctx context.Context, skuID, hubID uuid.UUID, quantityChange int, transactionType string) error {
@@ -162,9 +162,9 @@ func UpdateInventory(ctx context.Context, skuID, hubID uuid.UUID, quantityChange
 		case "add":
 			// quantityChange remains positive
 		case "remove":
-			quantityChange = -intAbs(quantityChange) // remove means subtract quantity
+			quantityChange = -intAbs(quantityChange)
 		default:
-			return errors.New("invalid transaction type")
+			return errors.New(Translate("invalid_transaction_type"))
 		}
 
 		newQty := inventory.Quantity + quantityChange
@@ -182,4 +182,24 @@ func intAbs(x int) int {
 		return -x
 	}
 	return x
+}
+
+// i18n stub
+var locale = map[string]string{
+	"invalid_request":          "Invalid request body",
+	"invalid_sku_id":           "Invalid SKU ID",
+	"invalid_hub_id":           "Invalid Hub ID",
+	"hub_not_found":            "Hub not found",
+	"sku_not_found":            "SKU not found",
+	"insufficient_inventory":   "Not enough inventory",
+	"internal_server_error":    "Internal server error",
+	"inventory_updated":        "Inventory updated successfully",
+	"invalid_transaction_type": "Invalid transaction type",
+}
+
+func Translate(key string) string {
+	if val, ok := locale[key]; ok {
+		return val
+	}
+	return key
 }

@@ -2,46 +2,44 @@ package db
 
 import (
 	"context"
-	"log"
 
-	"github.com/RohitGupta-omniful/IMS/config"
+	"github.com/omniful/go_commons/config"
 	"github.com/omniful/go_commons/db/sql/postgres"
+	"github.com/omniful/go_commons/log"
 	"gorm.io/gorm"
 )
 
 var DBCluster *postgres.DbCluster
 
-// InitDatabase initializes the master and slave DB connections
 func InitDatabase(ctx context.Context) {
 	// Load master DB config
 	masterConfig := postgres.DBConfig{
-		Host:                   config.GetMasterHost(ctx),
-		Port:                   config.GetMasterPort(ctx),
-		Username:               config.GetMasterUser(ctx),
-		Password:               config.GetMasterPassword(ctx),
-		Dbname:                 config.GetPostgresDBName(ctx),
-		DebugMode:              config.GetPostgresDebug(ctx),
+		Host:                   config.GetString(ctx, "postgresql.master.host"),
+		Port:                   config.GetString(ctx, "postgresql.master.port"),
+		Username:               config.GetString(ctx, "postgresql.master.user"),
+		Password:               config.GetString(ctx, "postgresql.master.password"),
+		Dbname:                 config.GetString(ctx, "postgresql.database_name"),
+		DebugMode:              config.GetBool(ctx, "postgresql.debugMode"),
 		SkipDefaultTransaction: true,
 		PrepareStmt:            true,
-		MaxOpenConnections:     config.GetPostgresMaxOpenConns(ctx),
-		MaxIdleConnections:     config.GetPostgresMaxIdleConns(ctx),
-		ConnMaxLifetime:        config.GetPostgresConnMaxLifetime(ctx),
+		MaxOpenConnections:     config.GetInt(ctx, "postgresql.maxOpenConns"),
+		MaxIdleConnections:     config.GetInt(ctx, "postgresql.maxIdleConns"),
+		ConnMaxLifetime:        config.GetDuration(ctx, "postgresql.connMaxLifetime"),
 	}
 
 	// Load slave DB config
 	slaveConfig := postgres.DBConfig{
-		Host:     config.GetSlaveHost(ctx),
-		Port:     config.GetSlavePort(ctx),
-		Username: config.GetSlaveUser(ctx),
-		Password: config.GetSlavePassword(ctx),
-		Dbname:   config.GetPostgresDBName(ctx),
+		Host:     config.GetString(ctx, "postgresql.slave.host"),
+		Port:     config.GetString(ctx, "postgresql.slave.port"),
+		Username: config.GetString(ctx, "postgresql.slave.user"),
+		Password: config.GetString(ctx, "postgresql.slave.password"),
+		Dbname:   config.GetString(ctx, "postgresql.database_name"),
 	}
 	slaveConfigs := []postgres.DBConfig{slaveConfig}
 
-	// Initialize cluster
+	// Initialize DB cluster
 	DBCluster = postgres.InitializeDBInstance(masterConfig, &slaveConfigs)
-
-	log.Println("Database connection established successfully")
+	log.Info("Database connection established successfully")
 }
 
 // GetMasterDB returns a master *gorm.DB instance

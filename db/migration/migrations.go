@@ -2,41 +2,40 @@ package migration
 
 import (
 	"context"
-	"fmt"
-	"log"
 	"net/url"
 
-	"github.com/RohitGupta-omniful/IMS/config"
+	"github.com/omniful/go_commons/config"
 	"github.com/omniful/go_commons/db/sql/migration"
+	"github.com/omniful/go_commons/log"
 )
 
-// RunMigrations initializes the migration and applies pending migrations
 func RunMigrations(ctx context.Context) {
 	// Extract DB config values
-	username := config.GetMasterUser(ctx)
-	rawPassword := config.GetMasterPassword(ctx)
-	host := config.GetMasterHost(ctx)
-	port := config.GetMasterPort(ctx)
-	dbname := config.GetPostgresDBName(ctx)
+	username := config.GetString(ctx, "postgresql.master.user")
+	rawPassword := config.GetString(ctx, "postgresql.master.password")
+	host := config.GetString(ctx, "postgresql.master.host")
+	port := config.GetString(ctx, "postgresql.master.port")
+	dbname := config.GetString(ctx, "postgresql.database_name")
 	password := url.QueryEscape(rawPassword)
 
-	// Construct correct DSN manually
-	dbURL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", username, password, host, port, dbname)
-	log.Println("Migration DB URL:", dbURL)
+	// Construct DSN
+	dbURL := "postgres://" + username + ":" + password + "@" + host + ":" + port + "/" + dbname + "?sslmode=disable"
+	log.Infof("Migration DB URL: %s", dbURL)
 
-	// Path to migration files
+	// Path to migration files (update to dynamic path or embed if needed)
 	migrationPath := "file://C:/Users/LENOVO/go/Omniful/Onboarding-project/InventoryManagementSystemMicroService/db/migration"
 
-	// Initialize the migrator
+	// Initialize migrator
 	migrator, err := migration.InitializeMigrate(migrationPath, dbURL)
 	if err != nil {
-		log.Fatalf("Failed to initialize migrator: %v", err)
+		log.Errorf("Failed to initialize migrator: %v", err)
+		return
 	}
 
-	// Apply pending migrations
 	if err := migrator.Up(); err != nil {
-		log.Fatalf("Failed to apply migrations: %v", err)
+		log.Errorf("Failed to apply migrations: %v", err)
+		return
 	}
 
-	log.Println("Migrations applied successfully")
+	log.Info("Migrations applied successfully")
 }
