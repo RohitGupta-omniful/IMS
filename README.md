@@ -77,7 +77,7 @@ Authorization: Bearer secret-token
 
 ---
 
-## API Endpoints
+## API Endpoints Example
 
 ### Validate Hub
 
@@ -96,61 +96,3 @@ Authorization: Bearer secret-token
   }
 }
 ```
-
-### Validate SKU
-
-**GET** `/validate/sku/{sku_id}`
-
-**Headers:**
-```
-Authorization: Bearer secret-token
-```
-
-**Response:**
-```json
-{
-  "data": {
-    "is_valid": false
-  }
-}
-```
-
-### Upsert Inventory
-
-**POST** `/inventory/upsert`
-
-**Headers:**
-```
-Authorization: Bearer secret-token
-Content-Type: application/json
-```
-
-**Request Body:**
-```json
-{
-  "hub_id": "hub123",
-  "sku_id": "sku456",
-  "quantity": 100
-}
-```
-
----
-
-## Local Development
-
-Use Docker and Postgres/Redis containers for local development:
-
-```bash
-docker-compose up -d
-go run main.go
-```
-
-Test endpoints with tools like **Postman**, **Thunder Client**, or `curl`.
-
----
-
-## Notes
-
-- All protected routes require a valid bearer token.
-- Redis is used to reduce DB hits for validation checks.
-- i18n enables multi-language response customization.
