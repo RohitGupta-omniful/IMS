@@ -6,49 +6,50 @@ This microservice manages hubs, SKUs, and inventory operations. It provides robu
 
 Project Structure
 -----------------
-cache/         # Redis cache setup and usage
-configs/       # Application configuration and environment management
-db/            # Database connection and migration logic using GORM
-handler/       # HTTP handlers for hubs, SKUs, and inventory operations
-localstack/    # Configuration for localstack-based testing
-middleware/    # Authentication and logging middleware
-models/        # ORM models for Hub, SKU, Inventory, etc.
-router/        # API route definitions
-server/        # Server and Gin router initialization
-main.go        # Application entry point
-docker-compose.yml  # Setup for Redis, PostgreSQL, and other services
-go.mod / go.sum     # Go module dependencies
+cache/             # Redis cache setup and usage
+configs/           # Configuration and environment management
+db/                # Database connection and GORM-based migrations
+handler/           # HTTP handlers for hubs, SKUs, and inventory
+localstack/        # Localstack testing setup
+middleware/        # Token authentication and request logging
+models/            # GORM models for Hub, SKU, Inventory, etc.
+router/            # API route definitions
+server/            # Gin router and server setup
+main.go            # Entry point of the application
+docker-compose.yml # Redis and PostgreSQL setup
+go.mod / go.sum    # Go module dependencies
 
 Features
 --------
 - Full CRUD operations for Hubs and SKUs
-- Inventory upsert with intelligent conflict resolution
-- Validation endpoints for checking the existence of hubs and SKUs
-- Redis caching for optimized validation checks
-- Middleware for token-based authentication and structured logging
-- Internationalization (i18n) support for response messages and logs
-- Database migrations using Go-native tooling
-- Local development ready with Docker Compose support
+- Inventory upsert with conflict resolution
+- Hub and SKU validation endpoints
+- Redis-based caching for validations
+- Token-based authentication middleware
+- Structured logging of requests
+- i18n support for localizable messages and logs
+- Go-based database migration tooling
+- Docker Compose support for local development
 
 Application Workflow
 --------------------
-1. On startup, the service initializes configurations, database, Redis, i18n settings, and the Gin HTTP server.
-2. Authentication middleware checks for a valid bearer token in the Authorization header.
-3. Clients can verify if a hub or SKU exists using /validate/hub/:id or /validate/sku/:id.
-4. The service checks Redis first for validation data, falling back to the database if not cached.
-5. Inventory records can be inserted or updated via the /inventory/upsert endpoint.
-6. CRUD APIs allow management of hubs and SKUs with support for POST, GET, PUT, and DELETE.
-7. Docker Compose facilitates seamless local development with Redis and PostgreSQL containers.
+1. Service initializes configs, DB, Redis, i18n, and Gin HTTP server
+2. Token-based middleware validates the Authorization header
+3. Validation endpoints check existence of hubs or SKUs
+4. Redis is used as a cache; DB is checked on cache miss
+5. /inventory/upsert allows inserting or updating inventory records
+6. Standard CRUD operations for hub and SKU resources
+7. Development environment runs with docker-compose
 
-API Endpoints Example
--------------
+API Endpoints (Examples)
+------------------------
+
 Validate Hub
+------------
 GET /validate/hub/{hub_id}
-#### Required Headers
 
-| Key            | Value               |
-|----------------|---------------------|
-| Authorization  | Bearer secret-token |
+Headers:
+Authorization: Bearer secret-token
 
 Response:
 {
